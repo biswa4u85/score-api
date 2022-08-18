@@ -1,16 +1,15 @@
 const redis = require("redis");
 const axios = require("axios");
 const socketIO = require("socket.io");
-const config = require("../config/environment");
-const redisClient = redis.createClient({ url: process.env.REDISURL || config.REDISURL });
+const redisClient = redis.createClient({ url: process.env.REDISURL });
 
 function apiScoreCalls(path) {
     const options = {
         method: 'GET',
-        url: `${process.env.RAPIDAPIURL || config.RAPIDAPIURL}/${path}`,
+        url: `${process.env.RAPIDAPIURL}/${path}`,
         headers: {
-            'X-RapidAPI-Key': process.env.RAPIDAPIKEY || config.RAPIDAPIKEY,
-            'X-RapidAPI-Host': process.env.RAPIDAPIHOST || config.RAPIDAPIHOST
+            'X-RapidAPI-Key': process.env.RAPIDAPIKEY,
+            'X-RapidAPI-Host': process.env.RAPIDAPIHOST
         }
     };
     return axios.request(options).then((response) => {
@@ -57,9 +56,8 @@ exports.listen = async (server) => {
             let value = key.split('_')
             if (value[0] === 'fetch') {
                 let matchId = value[1]
-                // let data = await apiScoreCalls(`match/${matchId}`)
-                // socket.to(matchId).emit(data);
-                socket.to(matchId).emit("message", { aa: matchId });
+                let data = await apiScoreCalls(`match/${matchId}`)
+                socket.to(matchId).emit("message", data);
             }
         }
     }, 5000)
