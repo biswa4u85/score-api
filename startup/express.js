@@ -5,6 +5,7 @@ const config = require("../config/environment");
 
 module.exports.default = () => {
   const app = express();
+  app.use(require("cloudflare-middleware")());
   app.use(cors(config.corsOptions));
   app.use(bodyParser.json({ limit: config.bodyParser.limit }));
   app.use(

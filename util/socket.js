@@ -59,7 +59,7 @@ exports.listen = async (server) => {
                 let matchId = value[1]
                 // let data = await apiScoreCalls(`match/${matchId}`)
                 // socket.to(matchId).emit(data);
-                socket.to(matchId).emit("message", { aa: "aaa" });
+                socket.to(matchId).emit("message", { aa: matchId });
             }
         }
     }, 5000)
