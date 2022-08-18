@@ -1,16 +1,16 @@
-import { createClient } from 'redis';
-import axios from 'axios';
-import { Server } from "socket.io";
-import settings from '../settings';
-const redisClient = createClient({ url: settings.redisUrl });
+const redis = require("redis");
+const axios = require("axios");
+const socketIO = require("socket.io");
+const config = require("../config/environment");
+const redisClient = redis.createClient({ url: process.env.REDISURL || config.REDISURL });
 
-function apiScoreCalls(path: any) {
+function apiScoreCalls(path) {
     const options = {
         method: 'GET',
-        url: `${settings.rapidAPIUrl}/${path}`,
+        url: `${process.env.RAPIDAPIURL || config.RAPIDAPIURL}/${path}`,
         headers: {
-            'X-RapidAPI-Key': settings.rapidAPIKey,
-            'X-RapidAPI-Host': settings.rapidAPIHost
+            'X-RapidAPI-Key': process.env.RAPIDAPIKEY || config.RAPIDAPIKEY,
+            'X-RapidAPI-Host': process.env.RAPIDAPIHOST || config.RAPIDAPIHOST
         }
     };
     return axios.request(options).then((response) => {
@@ -20,14 +20,14 @@ function apiScoreCalls(path: any) {
     });
 }
 
-let socket: any;
-const listen = async (server: any) => {
-    socket = new Server(server)
+let socket;
+exports.listen = async (server) => {
+    socket = new socketIO.Server(server)
     await redisClient.connect();
 
-    socket.on("connection", (client: any) => {
-        let allRooms: any = {}
-        client.on("subscribe", async (eventID: any) => {
+    socket.on("connection", (client) => {
+        let allRooms = {}
+        client.on("subscribe", async (eventID) => {
             client.join(eventID);
             allRooms[eventID] = true
             let checkKey = await redisClient.get(`fetch_${eventID}`)
@@ -36,7 +36,7 @@ const listen = async (server: any) => {
             }
         })
 
-        client.on("unSubscribe", (eventID: any) => {
+        client.on("unSubscribe", (eventID) => {
             client.leave(eventID);
         })
 
@@ -59,12 +59,9 @@ const listen = async (server: any) => {
                 let matchId = value[1]
                 // let data = await apiScoreCalls(`match/${matchId}`)
                 // socket.to(matchId).emit(data);
+                socket.to(matchId).emit("message", { aa: "aaa" });
             }
         }
     }, 5000)
 
-};
-
-export default {
-    listen: listen
 };
