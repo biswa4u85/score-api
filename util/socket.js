@@ -42,12 +42,12 @@ exports.listen = async (server) => {
         setInterval(async () => {
             for (let key in allRooms) {
                 let size = socket.sockets.adapter.rooms.get(key)?.size
-                if (!size) {
+                if (size == undefined) {
+                    delete allRooms[key]
                     redisClient.expire(`fetch_${key}`, 5)
                 }
             }
         }, 2000)
-
     })
 
     setInterval(async () => {
@@ -57,9 +57,9 @@ exports.listen = async (server) => {
             if (value[0] === 'fetch') {
                 let matchId = value[1]
                 let data = await apiScoreCalls(`match/${matchId}`)
-                socket.to(matchId).emit("message", data);
+                socket.to(matchId).emit("message", { [matchId]: data});
             }
         }
-    }, 5000)
+    }, 2000)
 
 };
