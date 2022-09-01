@@ -47,7 +47,7 @@ exports.listen = async (server) => {
                     redisClient.expire(`fetch_${key}`, 5)
                 }
             }
-        }, 2000)
+        }, 10000)
     })
 
     setInterval(async () => {
@@ -57,9 +57,9 @@ exports.listen = async (server) => {
             if (value[0] === 'fetch') {
                 let matchId = value[1]
                 let data = await apiScoreCalls(`match/${matchId}`)
-                socket.to(matchId).emit("message", { [matchId]: data});
+                socket.to(matchId).emit("message", { [matchId]: data });
             }
         }
-    }, 2000)
+    }, 10000)
 
 };
