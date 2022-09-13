@@ -47,7 +47,7 @@ exports.listen = async (server) => {
                     redisClient.expire(`fetch_${key}`, 5)
                 }
             }
-        }, 10000)
+        }, 2000)
     })
 
     setInterval(async () => {
