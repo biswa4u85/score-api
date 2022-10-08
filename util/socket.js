@@ -57,7 +57,13 @@ exports.listen = async (server) => {
             if (value[0] === 'fetch') {
                 let matchId = value[1]
                 let data = await apiScoreCalls(`match/${matchId}`)
-                socket.to(matchId).emit("message", { [matchId]: data });
+                if (data == undefined) {
+                    redisClient.expire(`fetch_${matchId}`, 5)
+                } else if (data?.live_details?.match_summary?.in_play && data.live_details.match_summary.in_play == 'No') {
+                    redisClient.expire(`fetch_${matchId}`, 5)
+                } else {
+                    socket.to(matchId).emit("message", { [matchId]: data });
+                }
             }
         }
     }, 10000)
