@@ -56,7 +56,7 @@ exports.listen = async (server) => {
             let value = key.split('_')
             if (value[0] === 'fetch') {
                 let matchId = value[1]
-                let data = await apiScoreCalls(`match/${matchId}`)
+                let data = await apiScoreCalls(`v1/events/summary?locale=en_INT&event_id=${matchId}`)
                 if (data == undefined) {
                     redisClient.expire(`fetch_${matchId}`, 5)
                 } else if (data?.live_details?.match_summary?.in_play && data.live_details.match_summary.in_play == 'No') {
