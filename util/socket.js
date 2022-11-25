@@ -13,7 +13,7 @@ function apiScoreCalls(path) {
         }
     };
     return axios.request(options).then((response) => {
-        return response.data.results
+        return response?.data?.typeMatches
     }).catch((error) => {
         return { 'status': "error", 'data': error?.message }
     });
@@ -52,20 +52,45 @@ exports.listen = async (server) => {
 
     setInterval(async () => {
         let allKey = await redisClient.keys(`*`)
+        let allMatchs = {}
         for (let key of allKey) {
             let value = key.split('_')
             if (value[0] === 'fetch') {
                 let matchId = value[1]
-                let data = await apiScoreCalls(`v1/events/summary?locale=en_INT&event_id=${matchId}`)
-                if (data == undefined) {
-                    redisClient.expire(`fetch_${matchId}`, 5)
-                } else if (data?.live_details?.match_summary?.in_play && data.live_details.match_summary.in_play == 'No') {
-                    redisClient.expire(`fetch_${matchId}`, 5)
-                } else {
-                    socket.to(matchId).emit("message", { [matchId]: data });
+                allMatchs[matchId] = true
+                // let data = await apiScoreCalls(`v1/events/summary?locale=en_INT&event_id=${matchId}`)
+                // if (data == undefined) {
+                //     redisClient.expire(`fetch_${matchId}`, 5)
+                // } else if (data?.live_details?.match_summary?.in_play && data.live_details.match_summary.in_play == 'No') {
+                //     redisClient.expire(`fetch_${matchId}`, 5)
+                // } else {
+                //     socket.to(matchId).emit("message", { [matchId]: data });
+                // }
+            }
+        }
+        // New Score Calls
+        if (Object.keys(allMatchs).length > 0) {
+            let data = await apiScoreCalls(`/matches/v1/live`)
+            if (data) {
+                for (let series of data) {
+                    if (series.seriesMatches) {
+                        for (let item of series.seriesMatches) {
+                            let matches = item?.seriesAdWrapper?.matches ? item.seriesAdWrapper.matches : []
+                            for (let matche of matches) {
+                                let tempMatchId = matche?.matchInfo?.matchId ? String(matche.matchInfo.matchId) : null
+                                if (tempMatchId in allMatchs == true) {
+                                    socket.to(tempMatchId).emit("message", { [tempMatchId]: matche });
+                                } else {
+                                    redisClient.expire(`fetch_${tempMatchId}`, 5)
+                                    delete allMatchs[tempMatchId]
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+
     }, 10000)
 
 };
